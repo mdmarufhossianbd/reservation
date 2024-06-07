@@ -5,19 +5,19 @@ import toast, { Toaster } from "react-hot-toast";
 import useCarsList from "../../Hooks/useCarsList";
 import './Home.css';
 const Home = () => {
-    const [pickupDate, setPickupDate] = useState(null);
-    const [returnDate, setReturnDate] = useState(null);
+    const [pickupDate, setPickupDate] = useState();
+    const [returnDate, setReturnDate] = useState();
     const [reservationId, setReservationId] = useState('')
     const [discount, setDiscount] = useState('')
     const [vehicleName, setVehicleName] = useState('')
-    const [selectedRates, setSelectedRates] = useState(null);
-    const [selectDuration, setSelectDuration] = useState('')
-    const [selectDurationValue, setSelectDeurationValue] = useState(null)
+    const [selectedRates, setSelectedRates] = useState(0);
+    const [selectDuration, setSelectDuration] = useState('');
+    const [selectDurationValue, setSelectDeurationValue] = useState();
 
     const [carList] = useCarsList();
     const vehicleType = [...new Set(carList.map(item => item.type))]
     const valicle = carList.map(item => item.make)
-    
+
 
 
     const handleDownload = () => {
@@ -36,6 +36,7 @@ const Home = () => {
         const vehicle = e.target.value;
         setVehicleName(vehicle)
         const car = carList.find(car => car.make === vehicle);
+        console.log(car);
         setSelectedRates(car ? car.rates : null);
     }
     // duration name like hour, day, week
@@ -47,11 +48,34 @@ const Home = () => {
     const handleDurationValue = (e) => {
         const durationValue = e.target.value;
         setSelectDeurationValue(durationValue)
-        console.log(durationValue);
+
+    }
+    
+    // rate for every cars
+    const rate = () => {
+        if (!selectedRates || !selectDurationValue) return 0;
+        const rentPrice = selectDuration === "Hourly" ? selectedRates.hourly : selectDuration === "Daily" ? selectedRates.daily : selectedRates.weekly;
+        return rentPrice
     }
 
-    console.log(selectDuration);
+    // price for each rents
+    const price = () => {
+        if (!selectedRates || !selectDurationValue) return 0;
+        const totalDuration = selectDuration === "Hourly" ? selectedRates.hourly : selectDuration === "Daily" ? selectedRates.daily : selectedRates.weekly;
+        return (totalDuration * selectDurationValue) || 0;
+    }
 
+    const totalRentalCost = () => {
+        if (!selectedRates || !selectDurationValue) return 0;
+        const totalDuration = selectDuration === "Hourly" ? selectedRates.hourly : selectDuration === "Daily" ? selectedRates.daily : selectedRates.weekly;
+        return <div>
+            {
+                (totalDuration * selectDurationValue) - discount
+            }
+        </div> || 0;
+    };
+
+    // todo : 1. pdf makaer 2. discout showing in ui
     return (
         <div className="max-w-7xl mx-auto my-10">
             <Toaster
@@ -94,11 +118,12 @@ const Home = () => {
                             <div className="flex my-4 gap-4 items-center">
                                 <label>Duration</label>
                                 <div className="rounded border p-2 border-[#d7d7ff] flex w-full">
-                                    <input onChange={handleDurationValue} className="w-full " name="durationValue" type="number" placeholder="1 Hour 1 Day 1 Week"/>
+                                    <input onChange={handleDurationValue} className="w-full " defaultValue={0} name="durationValue" type="number" placeholder="1 Hour 1 Day 1 Week" />
                                     <select onChange={handleDuration} value={selectDuration} name="duration">
-                                        <option value="hourly">Hourly</option>
-                                        <option value="daily">Daily</option>
-                                        <option value="weekly">Weekly</option>
+                                        <option defaultValue="">Select One</option>
+                                        <option  value="Hourly">Hourly</option>
+                                        <option value="Daily">Daily</option>
+                                        <option value="Weekly">Weekly</option>
                                     </select>
                                 </div>
                             </div>
@@ -130,38 +155,38 @@ const Home = () => {
                     <h2 className="border-b border-[#5d5cff] mb-5 text-xl font-semibold">Charges Summary</h2>
                     <div className="border p-5 border-[#5d5cff] rounded bg-[#DFDFFF]">
                         <table className="w-full">
-                            <thead className="border-b border-[#5d5cff]">
+                            <thead className="mb-3 border-b border-[#5d5cff] text-left">
                                 <tr>
                                     <th>Charge</th>
                                     <th>Unit</th>
                                     <th>Rate</th>
-                                    <th>Total</th>
+                                    <th className="text-right">Total</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td>Daily</td>
-                                    <td>Daily</td>
+                                    <td>{selectDuration}</td>
+                                    <td>1</td>
+                                    <td>
+                                        ${rate()}
+                                    </td>
+                                    <td className="text-right">
+                                        ${price()}
+                                    </td>
+                                </tr>
+                                <tr>
                                     <td>Collision Damage Waiver</td>
+                                    <td></td>
+                                    <td>$9.00</td>
+                                    <td className="text-right">$9.00</td>
+                                </tr>
+                                <tr>
                                     <td>Total</td>
-                                </tr>
-                                <tr>
-                                    <td>1</td>
-                                    <td>1</td>
-                                    <td>1</td>
-                                    <td>1</td>
-                                </tr>
-                                <tr>
-                                    <td>$99.00</td>
-                                    <td>$99.00</td>
-                                    <td>$99.00</td>
-                                    <td>$99.00</td>
-                                </tr>
-                                <tr>
-                                    <td>$99.00</td>
-                                    <td>$99.00</td>
-                                    <td>$99.00</td>
-                                    <td>$1000</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td className="text-right">
+                                        ${totalRentalCost()}
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -179,7 +204,8 @@ const Home = () => {
                                 }
                             </select>
                             <label className="my-2">Vehicle <span className="text-red-600">*</span></label>
-                            <select onChange={handleSelectVehicle} className="border p-3 rounded border-[#d7d7ff]" name="vehicle" value={vehicleName} required>                                
+                            <select onChange={handleSelectVehicle} className="border p-3 rounded border-[#d7d7ff]" name="vehicle" value={vehicleName} required>
+                                <option defaultValue=''>Select One</option>
                                 {
                                     valicle.map((item, idx) => <option value={item} key={idx}>{item}</option>)
                                 }
@@ -213,16 +239,6 @@ const Home = () => {
                         </form>
                     </div>
                 </div>
-
-                {/* just show */}
-                {selectedRates && (
-                <div>
-                    <h3>Rates for {vehicleName}</h3>
-                    <p>Hourly: ${selectedRates.hourly * selectDurationValue}</p>
-                    <p>Daily: ${selectedRates.daily * selectDurationValue}</p>
-                    <p>Weekly: ${selectedRates.weekly * selectDurationValue}</p>
-                </div>
-            )}
             </div>
         </div>
     );
