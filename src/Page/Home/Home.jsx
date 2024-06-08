@@ -7,39 +7,59 @@ import useCarsList from "../../Hooks/useCarsList";
 import './Home.css';
 
 const Home = () => {
-    const [pickupDate, setPickupDate] = useState();
-    const [returnDate, setReturnDate] = useState();
+    const [pickupDate, setPickupDate] = useState(new Date());
+    const [returnDate, setReturnDate] = useState(new Date());
     const [reservationId, setReservationId] = useState('')
     const [discount, setDiscount] = useState('')
     const [vehicleName, setVehicleName] = useState('')
+    const [vehicleMake, setVehicleMake] = useState('')
     const [selectedRates, setSelectedRates] = useState(0);
     const [selectDuration, setSelectDuration] = useState('');
     const [selectDurationValue, setSelectDeurationValue] = useState();
+    const [collisionDamageWaiver, setCollisionDamageWaiver] = useState(0);
+    const [liabilityInsurance, setLiabilityInsurance] = useState(0);
     const [carList] = useCarsList();
     const vehicleType = [...new Set(carList.map(item => item.type))]
     const valicle = carList.map(item => item.make)
-
+    const [nameFirst, setFirstName] = useState();
+    const [nameLast, setLastName] = useState();
+    const [userEmail, setUserEmail] = useState();
+    const [userPhone, setUserPhone] = useState();
     const ref = useRef()
 
-
+    const firstName = (e) => {
+        const nameFirst = e.target.value
+        setFirstName(nameFirst);
+    }
+    const lastName = (e) => {
+        const nameLast = e.target.value
+        setLastName(nameLast);
+    }
+    const email = (e) => {
+        const uEmail = e.target.value
+        setUserEmail(uEmail);
+    }
+    const phone = (e) => {
+        const uPhone = e.target.value
+        setUserPhone(uPhone);
+    }
 
     const handleDownload = () => {
-        // Reservation Details
         // pickup & return date validation
         if (pickupDate >= returnDate) {
             return toast.error('Please select valid return date.!')
         }
-        const reservationDetails = {
-            reservationId, discount, pickupDate, returnDate
-        }
-        console.log(reservationDetails);
+    }
+
+    const handleVehicleMake = (e) => {
+        const make = e.target.value
+        setVehicleMake(make)
     }
 
     const handleSelectVehicle = (e) => {
         const vehicle = e.target.value;
         setVehicleName(vehicle)
         const car = carList.find(car => car.make === vehicle);
-        console.log(car);
         setSelectedRates(car ? car.rates : null);
     }
     // duration name like hour, day, week
@@ -51,34 +71,36 @@ const Home = () => {
     const handleDurationValue = (e) => {
         const durationValue = e.target.value;
         setSelectDeurationValue(durationValue)
-
     }
-
+    // additional charge
+    const handleCheckboxDamage = (e) => {
+        setCollisionDamageWaiver(e.target.checked ? 9.00 : 0);
+    }
+    const handleCheckboxInsurance = (e) => {
+        setLiabilityInsurance(e.target.checked ? 15.00 : 0)
+    }
     // rate for every cars
     const rate = () => {
         if (!selectedRates || !selectDurationValue) return 0;
         const rentPrice = selectDuration === "Hourly" ? selectedRates.hourly : selectDuration === "Daily" ? selectedRates.daily : selectedRates.weekly;
         return rentPrice
     }
-
     // price for each rents
     const price = () => {
         if (!selectedRates || !selectDurationValue) return 0;
         const totalDuration = selectDuration === "Hourly" ? selectedRates.hourly : selectDuration === "Daily" ? selectedRates.daily : selectedRates.weekly;
         return (totalDuration * selectDurationValue) || 0;
     }
-
     const totalRentalCost = () => {
         if (!selectedRates || !selectDurationValue) return 0;
         const totalDuration = selectDuration === "Hourly" ? selectedRates.hourly : selectDuration === "Daily" ? selectedRates.daily : selectedRates.weekly;
         return <div>
             {
-                (totalDuration * selectDurationValue) - discount
+                (totalDuration * selectDurationValue + liabilityInsurance + collisionDamageWaiver) - discount
             }
         </div> || 0;
     };
 
-    // todo : 1. pdf makaer 2. discout showing in ui
     return (
         <div className="max-w-7xl mx-auto my-10">
             <Toaster
@@ -88,7 +110,6 @@ const Home = () => {
             <div className="flex justify-between mb-9">
                 <h1 className="text-3xl font-bold">Reservation</h1>
                 <ReactToPrint trigger={() => <button onClick={handleDownload} className="bg-[#5D5CFF] rounded py-2 px-4 text-white">Print / Download</button>} content={() => ref.current} ></ReactToPrint>
-
             </div>
             <div className="grid lg:grid-cols-3 gap-8">
                 {/* Reservation Details */}
@@ -144,13 +165,13 @@ const Home = () => {
                     <div>
                         <form className="border border-[#d7d7ff] p-5 rounded flex flex-col">
                             <label className="my-2">First Name : <span className="text-red-600">*</span></label>
-                            <input className="p-2 border border-[#d7d7ff] rounded my-2" type="text" name="first_name" required />
+                            <input onChange={firstName} className="p-2 border border-[#d7d7ff] rounded my-2" type="text" name="first_name" required />
                             <label className="my-2">Last Name : <span className="text-red-600">*</span></label>
-                            <input className="p-2 border border-[#d7d7ff] rounded my-2" type="text" name="last_name" required />
+                            <input onChange={lastName} className="p-2 border border-[#d7d7ff] rounded my-2" type="text" name="last_name" required />
                             <label className="my-2">Email: <span className="text-red-600">*</span></label>
-                            <input className="p-2 border border-[#d7d7ff] rounded my-2" type="email" name="email" required />
+                            <input onChange={email} className="p-2 border border-[#d7d7ff] rounded my-2" type="email" name="email" required />
                             <label className="my-2">Phone: <span className="text-red-600">*</span></label>
-                            <input className="p-2 border border-[#d7d7ff] rounded my-2" type="number" name="phone" required />
+                            <input onChange={phone} className="p-2 border border-[#d7d7ff] rounded my-2" type="number" name="phone" required />
                         </form>
                     </div>
                 </div>
@@ -178,19 +199,34 @@ const Home = () => {
                                         ${price()}
                                     </td>
                                 </tr>
+                                {/* additional charge */}
                                 <tr>
-                                    <td>Collision Damage Waiver</td>
+                                    <td>{collisionDamageWaiver === 0 ? '' : 'Collision Damage Waiver'}</td>
                                     <td></td>
-                                    <td>$9.00</td>
-                                    <td className="text-right">$9.00</td>
+                                    <td>{collisionDamageWaiver === 0 ? '' : <p>${collisionDamageWaiver}</p>}</td>
+                                    <td className="text-right">{collisionDamageWaiver === 0 ? '' : <p>${collisionDamageWaiver}</p>}</td>
                                 </tr>
+                                <tr>
+                                    <td>{liabilityInsurance === 0 ? '' : 'Liability Insurance'}</td>
+                                    <td></td>
+                                    <td>{liabilityInsurance === 0 ? '' : <p>${liabilityInsurance}</p>}</td>
+                                    <td className="text-right">{liabilityInsurance === 0 ? '' : <p>${liabilityInsurance}</p>}</td>
+                                </tr>
+                                {/* discount */}
+                                <tr>
+                                    <td>{discount ? 'Discount' : ''}</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td className="text-right">
+                                        {discount ? <p>${discount}</p> : ''}
+                                    </td>
+                                </tr>
+                                {/* total */}
                                 <tr>
                                     <td>Total</td>
                                     <td></td>
                                     <td></td>
-                                    <td className="text-right">
-                                        ${totalRentalCost()}
-                                    </td>
+                                    <td className="text-right">${totalRentalCost()}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -202,7 +238,7 @@ const Home = () => {
                     <div>
                         <form className="border border-[#d7d7ff] p-5 rounded flex flex-col">
                             <label className="my-2">Vehicle Type : <span className="text-red-600">*</span></label>
-                            <select className="border p-3 rounded border-[#d7d7ff]" name="vehicle_type" required>
+                            <select onChange={handleVehicleMake} className="border p-3 rounded border-[#d7d7ff]" name="vehicle_type" required>
                                 {
                                     vehicleType.map((item, idx) => <option value={item} key={idx}>{item}</option>)
                                 }
@@ -224,19 +260,19 @@ const Home = () => {
                         <form className="border border-[#d7d7ff] p-5 rounded flex flex-col gap-3">
                             <div className="flex justify-between">
                                 <div>
-                                    <input className="mr-2" type="checkbox" name="Collision_Damage_Waiver" /> <label>Collision Damage Waiver</label>
+                                    <input onChange={handleCheckboxDamage} className="mr-2" type="checkbox" name="Collision_Damage_Waiver" /> <label>Collision Damage Waiver</label>
                                 </div>
                                 <p>$9.00</p>
                             </div>
                             <div className="flex justify-between">
                                 <div>
-                                    <input className="mr-2" type="checkbox" name="Collision_Damage_Waiver" /> <label>Liability Insurance</label>
+                                    <input onChange={handleCheckboxInsurance} className="mr-2" type="checkbox" name="Collision_Damage_Waiver" /> <label>Liability Insurance</label>
                                 </div>
                                 <p>$15.00</p>
                             </div>
                             <div className="flex justify-between">
                                 <div>
-                                    <input className="mr-2" type="checkbox" name="Collision_Damage_Waiver" /> <label>Collision Damage Waiver</label>
+                                    <input className="mr-2" type="checkbox" name="Collision_Damage_Waiver" /> <label>Rental Tax</label>
                                 </div>
                                 <p>$11.5%</p>
                             </div>
@@ -246,29 +282,31 @@ const Home = () => {
             </div>
             {/* print content or pdf content */}
             <div className="hidden">
-                <div ref={ref} className="border h-[800px] mt-10 px-20 py-10">
-                    <div className="flex gap-5">
+                <div className="">
+                    <div ref={ref} className="flex gap-5 px-12 py-10">
                         <div className="w-1/2">
                             <div className="flex justify-between">
-                                <img src="" alt="logo" />
+                                <img className="w-[180px] h-[90px]" src="https://s3.amazonaws.com/cka-dash/182-1021-RTO100/model1.png" alt="logo" />
                                 <div className="w-1/2">
                                     <p>CH Car Place Inc <br />162 Bergen st Brooklyn, <br /> NY 11213 <br />PH#</p>
                                 </div>
                             </div>
-                            <div className="flex justify-between">
+                            <div className="flex gap-4">
                                 <div>
-                                    <h2>RENTER INFO</h2>
-                                    <p>Shihab Ahmed <br /> test@gmail.com</p>
+                                    <h2 className="font-semibold">RENTER INFO</h2>
+                                    <p>{nameFirst} {nameLast} <br /> {userEmail}</p>
+                                    <p>Phone : {userPhone}</p>
                                 </div>
                                 <div>
-                                    <p>Monday 9:00 AM-6:00 PM <br />Tuesday 9:00 AM-6:00 PM <br /> Wednesday 9:00 AM-6:00 PM <br />Thursday 9:00 AM-6:00 PM <br /></p>
+                                    <p> <span>Prickup Date and Time:</span> <br /> {pickupDate.toLocaleString()}</p>
+                                    <p> <span>Return Date and Time:</span> <br /> {returnDate.toLocaleString()}</p>
                                 </div>
                             </div>
                             <div>
-                                <h2>ADDITIONAL AUTHORIZED DRIVER(S)</h2>
-                                <h3>UNIT DETAILS</h3>
-                                <p>Unit: NISSAN ROGUE BLACK <br />Make & Model: NISSAN ROGUE BLACK</p>
-                                <p>BILL TO:</p>
+                                <h2 className="font-semibold py-2">ADDITIONAL AUTHORIZED DRIVER(S)</h2>
+                                <h3 className="font-semibold">UNIT DETAILS</h3>
+                                <p>Unit: {vehicleName} <br />Make & Model: {vehicleMake} {vehicleName}</p>
+                                <p className="mt-4">BILL TO:</p>
                                 <p>Payment Type: Unpaid <br />AUTH: $0.00</p>
                                 <p>Referral: <br /> NOTICE: <br /> Collision Insurance (CDW)- $7 per day</p>
                                 <p>Limits liability of damages to one's own vehicle up to provides you coverage for rental vehicle damage or $1000 in event of an accident,by waiving this coverage renter agrees to be hold liable for damages up to the entire value of the vehicle.</p>
@@ -283,11 +321,11 @@ const Home = () => {
                             <h3>RA #0121</h3>
                             <p>REPAIR ORDER:</p>
                             <p>CLAIM:</p>
-                            <p>Date/Time Out: 03/29/2024 12:33 AM <br /> Date/Time In 03/29/2024 01:33 AM</p>
+                            <p>Date/Time Out: {returnDate.toLocaleString()} <br /> Date/Time In: {pickupDate.toLocaleString()} </p>
                             {/* charge summery */}
-                            <div>
-                                <h2 className="border-b border-[#5d5cff] mb-5 text-xl font-semibold">Charges Summary</h2>
-                                <div className="border p-5 border-[#5d5cff] rounded bg-[#DFDFFF]">
+                            <div className="bg-[#e6e6e3]">
+                                <h2 className="mb-5 text-xl font-semibold">Charges Summary</h2>
+                                <div className="">
                                     <table className="w-full">
                                         <thead className="mb-3 border-b border-[#5d5cff] text-left">
                                             <tr>
@@ -308,19 +346,34 @@ const Home = () => {
                                                     ${price()}
                                                 </td>
                                             </tr>
+                                            {/* additional charge */}
                                             <tr>
-                                                <td>Collision Damage Waiver</td>
+                                                <td>{collisionDamageWaiver === 0 ? '' : 'Collision Damage Waiver'}</td>
                                                 <td></td>
-                                                <td>$9.00</td>
-                                                <td className="text-right">$9.00</td>
+                                                <td>{collisionDamageWaiver === 0 ? '' : <p>${collisionDamageWaiver}</p>}</td>
+                                                <td className="text-right">{collisionDamageWaiver === 0 ? '' : <p>${collisionDamageWaiver}</p>}</td>
                                             </tr>
+                                            <tr>
+                                                <td>{liabilityInsurance === 0 ? '' : 'Liability Insurance'}</td>
+                                                <td></td>
+                                                <td>{liabilityInsurance === 0 ? '' : <p>${liabilityInsurance}</p>}</td>
+                                                <td className="text-right">{liabilityInsurance === 0 ? '' : <p>${liabilityInsurance}</p>}</td>
+                                            </tr>
+                                            {/* discount */}
+                                            <tr>
+                                                <td>{discount ? 'Discount' : ''}</td>
+                                                <td></td>
+                                                <td></td>
+                                                <td className="text-right">
+                                                    {discount ? <p>${discount}</p> : ''}
+                                                </td>
+                                            </tr>
+                                            {/* total */}
                                             <tr>
                                                 <td>Total</td>
                                                 <td></td>
                                                 <td></td>
-                                                <td className="text-right">
-                                                    ${totalRentalCost()}
-                                                </td>
+                                                <td className="text-right">${totalRentalCost()}</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -329,7 +382,7 @@ const Home = () => {
                             <p>
                                 Your rental agreement offers, for an additional charge, an optional waiver to cover all or a part of your responsibility for damage to or loss of the vehicle: Before deciding whether to purchase the walver, you may wish to determine whether your own automobile insurance or credit card agreement loss and determine the amount of the deductible under your own insurance coverage. The purchase of the waiver is not mandatory. The waiver is not Insurance. I acknowledge that I have received and read a copy of this.
                             </p>
-                            <p>Renters Signature</p>
+                            <p className="mt-5">Renters Signature</p>
                             <p>__________________________________________</p>
                             <p>Additonal Driver 1</p>
                             <p>__________________________________________</p>
